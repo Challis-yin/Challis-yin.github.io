@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/kkk.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/kkk32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/kkk16.png">
+  <link rel="mask-icon" href="/images/kkk.svg" color="#222">
+  <link rel="manifest" href="/images/kkk.svg">
+  <meta name="msapplication-config" content="/images/kkk.svg">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="shadowsocks源码阅读逻辑结构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ss源码阅读">
+<meta property="og:url" content="http://example.com/2021/01/17/shadowsocks%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="林木木的小屋">
+<meta property="og:description" content="shadowsocks源码阅读逻辑结构">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/17644678-c7ca45ffdef335b1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/17644678-16ffacd67af85ad2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2021-01-17T13:56:30.000Z">
+<meta property="article:modified_time" content="2021-02-06T01:10:32.785Z">
+<meta property="article:author" content="Char1es_Y1n">
+<meta property="article:tag" content="学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/17644678-c7ca45ffdef335b1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="http://example.com/2021/01/17/shadowsocks%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ss源码阅读 | 林木木的小屋</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+
+<a target="_blank" rel="noopener" href="https://github.com/Challis-yin" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+
+
+
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">林木木的小屋</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">个人博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">1</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/01/17/shadowsocks%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/kkk.gif">
+      <meta itemprop="name" content="Char1es_Y1n">
+      <meta itemprop="description" content="生活学习都要有温度">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="林木木的小屋">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ss源码阅读
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-17 21:56:30" itemprop="dateCreated datePublished" datetime="2021-01-17T21:56:30+08:00">2021-01-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-06 09:10:32" itemprop="dateModified" datetime="2021-02-06T09:10:32+08:00">2021-02-06</time>
+              </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="shadowsocks源码阅读"><a href="#shadowsocks源码阅读" class="headerlink" title="shadowsocks源码阅读"></a>shadowsocks源码阅读</h1><h3 id="逻辑结构"><a href="#逻辑结构" class="headerlink" title="逻辑结构"></a>逻辑结构</h3><a id="more"></a>
+<p><img src="https://upload-images.jianshu.io/upload_images/17644678-c7ca45ffdef335b1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>软件本身是违法的，因此不考虑其违法用途，使用场景可以假定为某个对外网进行了限制的局域网。</p>
+<h3 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">G:\ycl_dl\CHROME DOWNLOAD\SHADOWSOCKS-MASTER\SHADOWSOCKS</span><br><span class="line">│  asyncdns.py</span><br><span class="line">│  common.py</span><br><span class="line">│  daemon.py</span><br><span class="line">│  encrypt.py</span><br><span class="line">│  eventloop.py</span><br><span class="line">│  local.py</span><br><span class="line">│  lru_cache.py</span><br><span class="line">│  manager.py</span><br><span class="line">│  server.py</span><br><span class="line">│  shell.py</span><br><span class="line">│  tcprelay.py</span><br><span class="line">│  udprelay.py</span><br><span class="line">│  __init__.py</span><br><span class="line">│</span><br><span class="line">└─crypto</span><br><span class="line">        openssl.py</span><br><span class="line">        rc4_md5.py</span><br><span class="line">        sodium.py</span><br><span class="line">        table.py</span><br><span class="line">        util.py</span><br><span class="line">        __init__.py</span><br></pre></td></tr></table></figure>
+<p>先大体的浏览了一遍，大致理解作用（有的代码实在不太懂）</p>
+<ul>
+<li>首先寻找main函数，在local.py和server.py中各有一个main函数，应该是本地的服务端和服务器的服务端的运行函数。</li>
+<li>tcp/udprelay.py 主要负责tcp、udp相关的服务 </li>
+<li>crypto目录 负责加密部分，发现其可以使用的对称加密方法非常的多</li>
+<li>asyncdns.py 按照rfc1035标准，实现了dns查询，async已经暗示了是异步处理的</li>
+<li>encrypt.py 对crypto中的文件进行了调用，进一步形成接口</li>
+<li>eventloop.py 这个地方实在没有看懂，上网看别人的博客分析，根据内容推测大概是为了实现并发，逻辑是在tcp/udprelay上层的</li>
+<li>daemon.py 实现守护进程</li>
+<li>shell.py 用于读取命令行内容，还可以确定python版本等配置内容</li>
+<li>lru_cache.py lru缓存相关</li>
+<li>common.py 一些函数，看到了例如字节流转成编程使用的数据类型的函数等等</li>
+</ul>
+<h3 id="运行逻辑"><a href="#运行逻辑" class="headerlink" title="运行逻辑"></a>运行逻辑</h3><p>文中将shadowsocks简称为ss<br>由上面的简要阅读后，发现主要内容都在tcp/udprelay.py、eventloop.py、local.py、server.py当中，需要重点分析一番。</p>
+<h4 id="local-py和server-py"><a href="#local-py和server-py" class="headerlink" title="local.py和server.py"></a>local.py和server.py</h4><p>两个部分的代码都有一定的相似性，作用也都大同小异，于是合在一起说说阅读的理解。</p>
+<h5 id="不同点"><a href="#不同点" class="headerlink" title="不同点"></a>不同点</h5><ul>
+<li>server.py有用户名密码验证部分，对于local到来的连接，首先要进行用户名、密码的验证。</li>
+<li>server端只能运行在linux或者unix操作系统上，因为使用有linux内核编程的部分,比如这一部分，使用到了Linux内核提供的fork函数<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">for i in range(0, int(config[&#39;workers&#39;])):</span><br><span class="line">                r &#x3D; os.fork()</span><br><span class="line">                if r &#x3D;&#x3D; 0:</span><br><span class="line">                    logging.info(&#39;worker started&#39;)</span><br><span class="line">                    is_child &#x3D; True</span><br><span class="line">                    run_server()</span><br><span class="line">                    break</span><br><span class="line">                else:</span><br><span class="line">                    children.append(r)</span><br><span class="line">            if not is_child:</span><br><span class="line">                def handler(signum, _):</span><br><span class="line">                    for pid in children:</span><br><span class="line">                        try:</span><br><span class="line">                            os.kill(pid, signum)</span><br><span class="line">                            os.waitpid(pid, 0)</span><br><span class="line">                        except OSError:  # child may already exited</span><br><span class="line">                            pass</span><br><span class="line">                    sys.exit()</span><br></pre></td></tr></table></figure>
+<h5 id="相同点"><a href="#相同点" class="headerlink" title="相同点"></a>相同点</h5>相同点还是分常多的，剥去以上的两个不同点，代码实现的功能其实类似可以概括为以下两个部分：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">    # 读取配置</span><br><span class="line">    conf &#x3D; shell.parse_config()</span><br><span class="line">    # 根据配置决定要不要以守护进程的方式运行</span><br><span class="line">    daemon.daemonize(conf)</span><br><span class="line">&quot;&quot;&quot;</span><br><span class="line">此处省去好多if判断</span><br><span class="line">&quot;&quot;&quot;</span><br><span class="line">    loop &#x3D; eventloop.init()</span><br><span class="line">    tcp_server &#x3D; tcprelay.init(conf)</span><br><span class="line">    udp_server &#x3D; udprelay.init(conf)</span><br><span class="line">    dns_resolver &#x3D; asyncdns.init(conf)</span><br><span class="line"></span><br><span class="line">    # 将 TCPRelay、UDPRelay 和 DNSResolver 注册到事件循环中</span><br><span class="line">    tcp_server.add_to_loop(loop)</span><br><span class="line">    udp_server.add_to_loop(loop)</span><br><span class="line">    dns_resolver.add_to_loop(loop)</span><br><span class="line"></span><br><span class="line">    loop.run()</span><br></pre></td></tr></table></figure>
+以上，大致可以明白两个包含main函数的主要文件的操作逻辑，位于整个项目食物链的顶端，调用其他文件，也从这里分析出剩下的重要文件位于tcp/udprelay.py、eventloop.py当中。<h4 id="eventloop-py"><a href="#eventloop-py" class="headerlink" title="eventloop.py"></a>eventloop.py</h4>文件实现了三种“多线程”的方式，实际上是实现的io多路复用技术</li>
+<li>epoll</li>
+<li>select</li>
+<li>kqueue</li>
+</ul>
+<p>有这三种方法，最常用到的方法是epoll方法<br>epoll对象，是python自带的库select中实现的，可以实现多路复用技术</p>
+<blockquote>
+<p>在linux，一切皆文件．所以当调用epoll_create时，内核给这个epoll分配一个file，但是这个不是普通的文件，而是只服务于epoll．<br>所以当内核初始化epoll时，会开辟一块内核高速cache区，用于安置我们监听的socket，这些socket会以红黑树的形式保存在内核的cache里，以支持快速的查找，插入，删除．同时，建立了一盒list链表，用于存储准备就绪的事件．所以调用epoll_wait时，在timeout时间内，只是简单的观察这个list链表是否有数据，如果没有，则睡眠至超时时间到返回；如果有数据，则在超时时间到，拷贝至用户态events数组中</p>
+</blockquote>
+<p>相关用法记录如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">import select 导入select模块</span><br><span class="line">epoll &#x3D; select.epoll() 创建一个epoll对象</span><br><span class="line">epoll.register(文件句柄,事件类型) 注册要监控的文件句柄和事件事件类型:</span><br><span class="line">　　select.EPOLLIN    可读事件</span><br><span class="line">　　select.EPOLLOUT   可写事件</span><br><span class="line">　　select.EPOLLERR   错误事件</span><br><span class="line">　　select.EPOLLHUP   客户端断开事件</span><br><span class="line">epoll.unregister(文件句柄)   销毁文件句柄</span><br><span class="line">epoll.poll(timeout)  当文件句柄发生变化，则会以列表的形式主动报告给用户进程,timeout超时时间，默认为-1，即一直等待直到文件句柄发生变化，如果指定为1 那么epoll每1秒汇报一次当前文件句柄的变化情况，如果无变化则返回空</span><br><span class="line">epoll.fileno() 返回epoll的控制文件描述符(Return the epoll control file descriptor)</span><br><span class="line">epoll.modfiy(fineno,event) fineno为文件描述符 event为事件类型  作用是修改文描述符所对应的事件</span><br><span class="line">epoll.fromfd(fileno) 从1个指定的文件描述符创建1个epoll对象</span><br><span class="line">epoll.close()   关闭epoll对象的控制文件描述符</span><br></pre></td></tr></table></figure>
+<p>ss实现多路复用的方式是建立一个eventloop类，再类中定义以下变量</p>
+<ul>
+<li>_fdmap<br>作为一个字典，存储一些handler，也就是存储着事件</li>
+<li>_last_time<br>存储超时时间</li>
+<li>_periodic_callbacks<br>数组形式，记录回调函数</li>
+<li>_stopping<br>默认值为false，当调用stop方法是置为true</li>
+</ul>
+<p>整个文件的精华其实是run函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">def run(self):</span><br><span class="line">        events &#x3D; []</span><br><span class="line">        while not self._stopping:</span><br><span class="line">            asap &#x3D; False</span><br><span class="line">            try:</span><br><span class="line">                events &#x3D; self.poll(TIMEOUT_PRECISION)</span><br><span class="line">            except (OSError, IOError) as e:</span><br><span class="line">                if errno_from_exception(e) in (errno.EPIPE, errno.EINTR):</span><br><span class="line">                    # EPIPE: Happens when the client closes the connection</span><br><span class="line">                    # EINTR: Happens when received a signal</span><br><span class="line">                    # handles them as soon as possible</span><br><span class="line">                    asap &#x3D; True</span><br><span class="line">                    logging.debug(&#39;poll:%s&#39;, e)</span><br><span class="line">                else:</span><br><span class="line">                    logging.error(&#39;poll:%s&#39;, e)</span><br><span class="line">                    import traceback</span><br><span class="line">                    traceback.print_exc()</span><br><span class="line">                    continue</span><br><span class="line"></span><br><span class="line">            for sock, fd, event in events:</span><br><span class="line">                handler &#x3D; self._fdmap.get(fd, None)</span><br><span class="line">                if handler is not None:</span><br><span class="line">                    handler &#x3D; handler[1]</span><br><span class="line">                    try:</span><br><span class="line">                        handler.handle_event(sock, fd, event)</span><br><span class="line">                    except (OSError, IOError) as e:</span><br><span class="line">                        shell.print_exception(e)</span><br><span class="line">            now &#x3D; time.time()</span><br><span class="line">            if asap or now - self._last_time &gt;&#x3D; TIMEOUT_PRECISION:</span><br><span class="line">                for callback in self._periodic_callbacks:</span><br><span class="line">                    callback()</span><br><span class="line">                self._last_time &#x3D; now</span><br></pre></td></tr></table></figure>
+<p>简要的说它实际上干了这样一个事情：<br>当发生事件时，通过事件对应的文件描述符 fd 找到 handler，调用 handler.handle_event(sock, fd, event) 来将事件交由 handler 处理，同时每隔 TIMEOUT_PRECISION 秒调用 TCPRelay、UDPRelay 或 DNSResolver 的 handle_periodic 函数处理超时或清除缓存<br>eventloop文件阅读完毕，迫切需要ralay文件参与了现在。</p>
+<h4 id="tcprelay-py"><a href="#tcprelay-py" class="headerlink" title="tcprelay.py"></a>tcprelay.py</h4><p>因为我们的主要目的就是为了实现tcp，对于udp实际上是不怎么关心的，因此我们只看一个，这时候发现不论是local端还是server端，他们都调用的同一个TCP relay，但是两者的功能又不很一样，因此有几分好奇。<br>tcprelay文件是项目中最大的文件，一共有700多行，主要定义了两个类</p>
+<ul>
+<li>TCPRelayHandler</li>
+<li>TCPRelay</li>
+</ul>
+<p>这个时候想要分析两个类，我们就不得不回到main函数里面寻找，发现逻辑是这样的</p>
+<ul>
+<li>main起来后会把TCPRelay加到eventloop。</li>
+<li>有新连接进来后在TCPRelay的handle_event处理，accept后生成一个TCPRelayHandler用于处理后续的事件。</li>
+<li>TCPRelayHandler初始化的时候会把自己加到loop里，并把自己添加到fd_to_handlers，后续再有事件TCPRelay 会通过 fd_to_handlers 交对应的 TCPRelayHandler中的handle_event处理。</li>
+</ul>
+<p>个人感觉这个文件中最神奇的部分是对于本地端口和远程端口的定义，对于业务逻辑和local与server对同一段代码的复用有至关重要的作用,网上找到了一张描述的很好的图<br><img src="https://upload-images.jianshu.io/upload_images/17644678-16ffacd67af85ad2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>其次开头的注释也非常重要：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># as sslocal:    </span><br><span class="line"># stage 0 auth METHOD received from local, reply with selection message ——STAGE_INIT    </span><br><span class="line"># stage 1 addr received from local, query DNS for remote ——STAGE_ADDR    </span><br><span class="line"># stage 2 UDP assoc ——STAGE_UDP_ASSOC    </span><br><span class="line"># stage 3 DNS resolved, connect to remote ——STAGE_DNS     </span><br><span class="line"># stage 4 still connecting, more data from local received ——STAGE_CONNECTING    </span><br><span class="line"># stage 5 remote connected, piping local and remote ——STAGE_STREAM    </span><br><span class="line"></span><br><span class="line"># as ssserver:    </span><br><span class="line"># stage 0 just jump to stage 1    </span><br><span class="line"># stage 1 addr received from local, query DNS for remote    </span><br><span class="line"># stage 3 DNS resolved, connect to remote    </span><br><span class="line"># stage 4 still connecting, more data from local received    </span><br><span class="line"># stage 5 remote connected, piping local and remote </span><br></pre></td></tr></table></figure>
+<p>定义了许多的stage，分别于我们通信过程中的流程相对应，具体含义在后面也解释的很清楚。同时每一种状态在tcp_handler类里面都有对应的方法，负责了socks5中通讯的过程，整理如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">STAGE_INIT —— _handle_stage_init    </span><br><span class="line">STAGE_ADDR —— _handle_stage_addr    </span><br><span class="line">STAGE_UDP_ASSOC ——对应UdpRelay中的方法，这里不做说明    </span><br><span class="line">STAGE_DNS ——  不做处理， 继续等待dns解析    </span><br><span class="line">STAGE_CONNECTING —— _handle_stage_connecting    </span><br><span class="line">STAGE_STREAM —— _handle_stage_stream    </span><br><span class="line">STAGE_DESTROYED —— destroy  </span><br></pre></td></tr></table></figure>
+<p>处理函数起到的作用与注释中的目的相同，不多做解释，可读性也比较强。<br>同时所有的函数命名都有一定的特点，如_handler_stage_xxx类似函数，都是对socks5协议通信相关，_local\remote_read\write类似函数都是与套接字数据的读取有关，规律性非常的强。<br>另一个类中值得一提的就是handle_event函数，其实在上一个文件中这个方法就出现了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">def handle_event(self, sock, fd, event):</span><br><span class="line">    # 如果是 TCPRelay 的 socket</span><br><span class="line">    if sock &#x3D;&#x3D; self._server_socket:</span><br><span class="line">        conn &#x3D; self._server_socket.accept()</span><br><span class="line">        TCPRelayHandler(self, self._fd_to_handlers,</span><br><span class="line">                        self._eventloop, conn[0], self._config,</span><br><span class="line">                        self._dns_resolver, self._is_local)</span><br><span class="line">    else:</span><br><span class="line">        # 找到 fd 对应的 TCPRelayHandler</span><br><span class="line">        handler &#x3D; self._fd_to_handlers.get(fd, None)</span><br><span class="line">        if handler:</span><br><span class="line">            handler.handle_event(sock, event)</span><br></pre></td></tr></table></figure>
+<p>目的就是找到对应的handler去进行具体的操作。</p>
+<h4 id="不忘初心"><a href="#不忘初心" class="headerlink" title="不忘初心"></a>不忘初心</h4><p>因为阅读别人项目的初心是为了写自己的加密通信程序，因此对于加密部分也打开稍微的阅读了一下。</p>
+<h5 id="加密算法"><a href="#加密算法" class="headerlink" title="加密算法"></a>加密算法</h5><p>有单个文件，分别实现三种方法，分别进行阅读<br>openssl.py 的加密算法使用的是基于openssl的python的一个库，叫Crypto，它通过调用这个库实现好多的加密方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"># openssl.py</span><br><span class="line">ciphers &#x3D; &#123;</span><br><span class="line">    &#39;aes-128-cfb&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-192-cfb&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-256-cfb&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-128-ofb&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-192-ofb&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-256-ofb&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-128-ctr&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-192-ctr&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-256-ctr&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-128-cfb8&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-192-cfb8&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-256-cfb8&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-128-cfb1&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-192-cfb1&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;aes-256-cfb1&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;bf-cfb&#39;: (16, 8, OpenSSLCrypto),</span><br><span class="line">    &#39;camellia-128-cfb&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;camellia-192-cfb&#39;: (24, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;camellia-256-cfb&#39;: (32, 16, OpenSSLCrypto),</span><br><span class="line">    &#39;cast5-cfb&#39;: (16, 8, OpenSSLCrypto),</span><br><span class="line">    &#39;des-cfb&#39;: (8, 8, OpenSSLCrypto),</span><br><span class="line">    &#39;idea-cfb&#39;: (16, 8, OpenSSLCrypto),</span><br><span class="line">    &#39;rc2-cfb&#39;: (16, 8, OpenSSLCrypto),</span><br><span class="line">    &#39;rc4&#39;: (16, 0, OpenSSLCrypto),</span><br><span class="line">    &#39;seed-cfb&#39;: (16, 16, OpenSSLCrypto),</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总的来说这一部分读起来还是挺让人疑惑的:一是相关文件之间的调用非常奇怪;二是密码好像是写死的16个”k”,他被写死在了程序当中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">def run_method(method):</span><br><span class="line">    cipher &#x3D; OpenSSLCrypto(method, b&#39;k&#39; * 32, b&#39;i&#39; * 16, 1)    # 这里相当奇怪</span><br><span class="line">    decipher &#x3D; OpenSSLCrypto(method, b&#39;k&#39; * 32, b&#39;i&#39; * 16, 0)</span><br><span class="line">    util.run_cipher(cipher, decipher)</span><br></pre></td></tr></table></figure>
+<p>同时还有一个rc4-md5.py文件，单独对rc4加密、md5做验证的加密传输方式进行了单独的包装，但是加密过程简单，相比来看破解也更简单。<br>此外还有一个sodium.py文件，文件主要定义了另一种新颖的加密方式：CHACHA20，之前没有接触过，具体看了一下，也上网搜集了一部分的资料 </p>
+<blockquote>
+<p>ChaCha20-Poly1305是Google所采用的一种新式加密算法，性能强大，在CPU为精简指令集的ARM平台上尤为显著（ARM v8前效果较明显），在同等配置的手机中表现是AES的4倍（ARM v8之后加入了AES指令，所以在这些平台上的设备，AES方式反而比chacha20-Poly1305方式更快，性能更好），可减少加密解密所产生的数据量进而可以改善用户体验，减少等待时间，节省电池寿命等。<br>20指的就是20轮的加密</p>
+</blockquote>
+<h4 id="密码部分总结"><a href="#密码部分总结" class="headerlink" title="密码部分总结"></a>密码部分总结</h4><p>总的来讲，ss可以选择三种算法</p>
+<ul>
+<li>aes     性能较好，保密性好，应用普遍，最为常用的方法</li>
+<li>chacha20    在arm指令集上表现优异，算法新颖，破解难度大保密性好</li>
+<li>rc4-md5    加密速度非常快，但用在外网上又被恶意破解的可能性</li>
+</ul>
+<h3 id="感受"><a href="#感受" class="headerlink" title="感受"></a>感受</h3><ul>
+<li>通过阅读别人的优秀代码，对个人的知识的提升感觉非常的大。学到了很多关于网络流量处理架构的知识，对相关协议，如dns协议、socks5协议，python的网络编程、python对于系统内核的调用等方面都感觉受益匪浅。因为工程本身代码量不超过万行，同时注释和相关readme也相当的详细，因此感觉非常适合读一读。</li>
+<li>同时对与项目对密码的实际应用也有了了解，了解到一种新型的加密算法</li>
+<li>读代码过程中的问题：1.没有研究lru、和线程守护相关的内容；2.如果多线程对同一变量同时进行修改，存在的写和读的问题，ss似乎没有解决，也可能存在死锁（不过死锁之后就会超时然后杀死线程，这么想想好像没毛病，但这也太暴力了）</li>
+<li>对于自己项目的实现也有一定的启示：1.有了对完成代码的进一步认识，诸如需要完成哪些部分，重点部分在哪里2.我觉得可以减少一些个人项目中不必要的部分，如可以不编程shell、lru、deamon部分、同时将两个服务器之间可以不加验证的连接。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%AD%A6%E4%B9%A0/" rel="tag"># 学习</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/17/test-my-site/" rel="prev" title="test_my_site">
+      <i class="fa fa-chevron-left"></i> test_my_site
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/02/06/%E5%8E%A8%E6%88%BF%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E8%82%89%E6%9C%AB%E8%B1%86%E8%85%90/" rel="next" title="厨房实战——肉末豆腐">
+      厨房实战——肉末豆腐 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#shadowsocks%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB"><span class="nav-number">1.</span> <span class="nav-text">shadowsocks源码阅读</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E7%BB%93%E6%9E%84"><span class="nav-number">1.0.1.</span> <span class="nav-text">逻辑结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="nav-number">1.0.2.</span> <span class="nav-text">目录结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E9%80%BB%E8%BE%91"><span class="nav-number">1.0.3.</span> <span class="nav-text">运行逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#local-py%E5%92%8Cserver-py"><span class="nav-number">1.0.3.1.</span> <span class="nav-text">local.py和server.py</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%8D%E5%90%8C%E7%82%B9"><span class="nav-number">1.0.3.1.1.</span> <span class="nav-text">不同点</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%9B%B8%E5%90%8C%E7%82%B9"><span class="nav-number">1.0.3.1.2.</span> <span class="nav-text">相同点</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#eventloop-py"><span class="nav-number">1.0.3.2.</span> <span class="nav-text">eventloop.py</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tcprelay-py"><span class="nav-number">1.0.3.3.</span> <span class="nav-text">tcprelay.py</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E5%BF%98%E5%88%9D%E5%BF%83"><span class="nav-number">1.0.3.4.</span> <span class="nav-text">不忘初心</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="nav-number">1.0.3.4.1.</span> <span class="nav-text">加密算法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%86%E7%A0%81%E9%83%A8%E5%88%86%E6%80%BB%E7%BB%93"><span class="nav-number">1.0.3.5.</span> <span class="nav-text">密码部分总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%84%9F%E5%8F%97"><span class="nav-number">1.0.4.</span> <span class="nav-text">感受</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Char1es_Y1n"
+      src="/images/kkk.gif">
+  <p class="site-author-name" itemprop="name">Char1es_Y1n</p>
+  <div class="site-description" itemprop="description">生活学习都要有温度</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="sidebar-button motion-element"><i class="fa fa-comment"></i>
+    Chat
+  </a>
+  </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Challis-yin" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Challis-yin" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:sdyinruicha@gmail.com" title="E-Mail → mailto:sdyinruicha@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/7311135117/" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;7311135117&#x2F;" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/39a7afb17a32" title="Jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;39a7afb17a32" rel="noopener" target="_blank"><i class="fa fa-book fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Char1es_Y1n</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">9k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">8 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
